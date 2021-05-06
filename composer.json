@@ -10,21 +10,21 @@
     "homepage": "https://webnet.fr",
     "license": "MIT",
     "require": {
-        "php": "^7.1.3",
-        "symfony/console": "^2.0.5|^3.0|^4.0",
-        "symfony/framework-bundle": "^4.0",
-        "symfony/doctrine-bridge": "^4.2",
-        "prowebce/database-anonymizer": "0.0.5"
+        "php": ">=8.0",
+        "symfony/console": "^5.0",
+        "symfony/framework-bundle": "^5.0",
+        "symfony/doctrine-bridge": "^5.0",
+        "prowebce/database-anonymizer": "^0.0.6"
     },
     "require-dev": {
-        "doctrine/annotations": "^1.6",
-        "phpunit/phpunit": "^7.4",
-        "fzaninotto/faker": "^1.8",
-        "symfony/config": "^4.2",
-        "symfony/yaml": "^4.2",
-        "doctrine/orm": "^2.6",
-        "matthiasnoback/symfony-dependency-injection-test": "^3.1",
-        "doctrine/doctrine-bundle": "^1.11"
+        "doctrine/annotations": "^1.12",
+        "phpunit/phpunit": "^9.3",
+        "fakerphp/faker": "^1.14",
+        "symfony/config": "^5.0",
+        "symfony/yaml": "^5.0",
+        "doctrine/orm": "^2.8",
+        "matthiasnoback/symfony-dependency-injection-test": "^4.2",
+        "doctrine/doctrine-bundle": "^2.2"
     },
     "suggest": {
         "doctrine/annotations": "To enable annotations.",
@@ -41,5 +41,12 @@
         "psr-4": {
             "WebnetFr\\DatabaseAnonymizerBundle\\Tests\\": "tests"
         }
-    }
+    },
+    "repositories": [
+        {
+            "name": "prowebce/database-anonymizer",
+            "type": "vcs",
+            "url": "https://github.com/labsbh/database-anonymizer.git"
+        }
+    ]
 }

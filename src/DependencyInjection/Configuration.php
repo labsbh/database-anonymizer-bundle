@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WebnetFr\DatabaseAnonymizerBundle\DependencyInjection;
 
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use WebnetFr\DatabaseAnonymizer\Config\ConfigurationTrait;
@@ -16,11 +19,12 @@ class Configuration implements ConfigurationInterface
     /**
      * @inheritdoc
      */
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('webnet_fr_database_anonymizer');
 
         $connectionsRootNode = (new TreeBuilder('connections'))->getRootNode();
+        /** @var ArrayNodeDefinition $node */
         $node = $connectionsRootNode
             ->requiresAtLeastOneElement()
             ->useAttributeAsKey('name')

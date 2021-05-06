@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WebnetFr\DatabaseAnonymizerBundle;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -15,7 +17,7 @@ class WebnetFrDatabaseAnonymizerBundle extends Bundle
     /**
      * @inheritdoc
      */
-    public function build(ContainerBuilder $container)
+    public function build(ContainerBuilder $container): void
     {
         $container->addCompilerPass(new AnonymizeCommandPass());
         $container->addCompilerPass(new ChainGeneratorFactoryPass());

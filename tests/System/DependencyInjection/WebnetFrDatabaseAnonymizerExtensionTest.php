@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WebnetFr\DatabaseAnonymizerBundle\Tests\System\DependencyInjection;
 
 use Matthias\SymfonyDependencyInjectionTest\PhpUnit\AbstractExtensionTestCase;
@@ -22,14 +24,14 @@ class WebnetFrDatabaseAnonymizerExtensionTest extends AbstractExtensionTestCase
     /**
      * @inheritdoc
      */
-    protected function getContainerExtensions()
+    protected function getContainerExtensions(): array
     {
         return [
             new WebnetFrDatabaseAnonymizerExtension(),
         ];
     }
 
-    public function testServicesLoaded()
+    public function testServicesLoaded(): void
     {
         $this->load();
 

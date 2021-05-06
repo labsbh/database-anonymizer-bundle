@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WebnetFr\DatabaseAnonymizerBundle\DependencyInjection\Compiler;
 
 use Symfony\Component\Config\Definition\Processor;
@@ -21,7 +23,7 @@ class AnonymizeCommandPass implements CompilerPassInterface
     /**
      * @inheritdoc
      */
-    public function process(ContainerBuilder $container)
+    public function process(ContainerBuilder $container): void
     {
         if (!$container->has(AnonymizeCommand::class)) {
             return;
@@ -31,7 +33,7 @@ class AnonymizeCommandPass implements CompilerPassInterface
 
         // Pass default anonymizer configuration to the command.
         $configuration = new Configuration();
-        $processor = new Processor();
+        $processor     = new Processor();
         $defaultConfig = $processor->processConfiguration(
             $configuration,
             $container->getExtensionConfig('webnet_fr_database_anonymizer')
@@ -57,6 +59,6 @@ class AnonymizeCommandPass implements CompilerPassInterface
             $anonymizeCommandDefinition->addMethodCall('enableAnnotations', [new Reference(AnnotationConfigFactory::class)]);
         }
 
-        $anonymizeCommandDefinition->addMethodCall('setAnonymizer', [new Reference(Anonymizer::class)]);
+        $anonymizeCommandDefinition->setArgument('$anonymizer', new Reference(Anonymizer::class));
     }
 }

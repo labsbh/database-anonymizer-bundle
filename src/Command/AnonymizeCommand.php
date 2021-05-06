@@ -1,11 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WebnetFr\DatabaseAnonymizerBundle\Command;
 
-use Doctrine\Common\Annotations\Reader;
-use Doctrine\DBAL\DBALException;
-use Doctrine\ORM\Mapping\ClassMetadata;
-use Symfony\Bridge\Doctrine\RegistryInterface;
+use Doctrine\DBAL\Exception;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -26,88 +26,47 @@ class AnonymizeCommand extends Command
 
     protected static $defaultName = 'webnet-fr:anonymizer:anonymize';
 
-    /**
-     * @var GeneratorFactoryInterface
-     */
-    private $generatorFactory;
+    private GeneratorFactoryInterface $generatorFactory;
 
     /**
      * Default anonymizer configuration usually defined in webnet_fr_database_anonymizer.yaml.
      *
      * @var array
      */
-    private $defaultConfig;
+    private array $defaultConfig;
 
-    /**
-     * @var RegistryInterface
-     */
-    private $registry;
+    private ?ManagerRegistry $registry = null;
 
-    /**
-     * @var AnnotationConfigFactory
-     */
-    private $annotationConfigFactory;
+    private AnnotationConfigFactory $annotationConfigFactory;
 
-    /**
-     * @var Anonymizer
-     */
-    private $anonymizer;
+    private Anonymizer $anonymizer;
 
-    /**
-     * @param GeneratorFactoryInterface $generatorFactory
-     */
-    public function __construct(GeneratorFactoryInterface $generatorFactory)
+    public function __construct(GeneratorFactoryInterface $generatorFactory, Anonymizer $anonymizer)
     {
         parent::__construct();
 
         $this->generatorFactory = $generatorFactory;
+        $this->anonymizer       = $anonymizer;
     }
 
-    /**
-     * Set Doctrine registry.
-     *
-     * @param RegistryInterface $registry
-     */
-    public function setRegistry(RegistryInterface $registry)
+    public function setRegistry(ManagerRegistry $registry): void
     {
         $this->registry = $registry;
     }
 
-    /**
-     * Enable annotations.
-     *
-     * @param AnnotationConfigFactory $annotationConfigFactory
-     */
-    public function enableAnnotations(AnnotationConfigFactory $annotationConfigFactory)
+    public function enableAnnotations(AnnotationConfigFactory $annotationConfigFactory): void
     {
         $this->annotationConfigFactory = $annotationConfigFactory;
     }
 
-    /**
-     * Set default anonymizer configuration.
-     *
-     * @param array $defaultConfig
-     *
-     * @return $this
-     */
-    public function setDefaultConfig(array $defaultConfig)
+    public function setDefaultConfig(array $defaultConfig): self
     {
         $this->defaultConfig = $defaultConfig;
 
         return $this;
     }
 
-    public function setAnonymizer(Anonymizer $anonymizer)
-    {
-        $this->anonymizer = $anonymizer;
-
-        return $this;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    protected function configure()
+    protected function configure(): void
     {
         parent::configure();
 
@@ -125,30 +84,26 @@ class AnonymizeCommand extends Command
             ->addOption('password', 'p', InputOption::VALUE_REQUIRED, 'Password.')
             ->addOption('connection', 'C', InputOption::VALUE_REQUIRED, 'Name of the connection to database.')
             ->addOption('annotations', 'a', InputOption::VALUE_NONE, 'Use annotations. "em" option must be provided.')
-            ->addOption('em', null, InputOption::VALUE_REQUIRED, 'Entity manager.')
-        ;
+            ->addOption('em', null, InputOption::VALUE_REQUIRED, 'Entity manager.', 'default');
     }
 
     /**
      * @inheritdoc
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $questionHelper = $this->getHelper('question');
-        $question = new ConfirmationQuestion('Are you sure you want to anonymize your database?', true);
+        $question       = new ConfirmationQuestion('Are you sure you want to anonymize your database?', true);
 
         if (!$questionHelper->ask($input, $output, $question)) {
-            return;
+            return  self::FAILURE;
         }
 
         $em = null;
-        $connection = null;
-        $configName = null;
-
 
         try {
             $connection = $this->getConnectionFromInput($input);
-        } catch (DBALException $e) {
+        } catch (Exception) {
             $connection = null;
         }
 
@@ -156,7 +111,7 @@ class AnonymizeCommand extends Command
         if ($connection) {
             $configName = 'default';
         } elseif ($emName = $input->getOption('em')) {
-            $em = $this->registry->getEntityManager($emName);
+            $em         = $this->registry->getManager($emName);
             $connection = $em->getConnection();
             $configName = (string) $emName;
         } else {
@@ -181,13 +136,13 @@ class AnonymizeCommand extends Command
             if (!$em) {
                 $output->writeln('<error>You must pass entity manager name in "--em" option. Pass "--em=default" if there is only one entity manager.</error>');
 
-                return;
+                return self::FAILURE;
             }
 
             if (!$this->annotationConfigFactory) {
                 $output->writeln('<error>You must enable Doctrine annotations: "annotations.reader" service is required.</error>');
 
-                return;
+                return self::FAILURE;
             }
 
             $config = $this->annotationConfigFactory->getConfig($em->getMetadataFactory()->getAllMetadata());
@@ -196,14 +151,14 @@ class AnonymizeCommand extends Command
             if (!is_file($configFilePath)) {
                 $output->writeln(sprintf('<error>Configuration file "%s" does not exist.</error>', $configFile));
 
-                return;
+                return self::FAILURE;
             }
 
             $config = $this->getConfigFromFile($configFilePath);
         } elseif (!empty($this->defaultConfig)) {
             if (!array_key_exists($configName, $this->defaultConfig['connections'])) {
                 throw new \LogicException('You must configure anonymizer for "'.$configName.'" connection');
-            };
+            }
 
             $config = $this->defaultConfig['connections'][$configName];
         } else {
@@ -215,5 +170,7 @@ class AnonymizeCommand extends Command
         $targetTables = $targetFactory->createTargets($config);
 
         $this->anonymizer->anonymize($connection, $targetTables);
+
+        return self::SUCCESS;
     }
 }

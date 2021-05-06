@@ -1,12 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WebnetFr\DatabaseAnonymizerBundle\Tests\System;
 
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\Exception\DriverException;
-use Doctrine\DBAL\Schema\Schema;
 
 /**
  * @author Vlad Riabchenko <vriabchenko@webnet.fr>
@@ -16,9 +16,9 @@ trait SystemTestTrait
     /**
      * @param bool $toDatabase
      *
-     * @return Connection
+     * @throws \Doctrine\DBAL\Exception
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @return Connection
      */
     private function getConnection(bool $toDatabase = true): Connection
     {
@@ -39,10 +39,7 @@ trait SystemTestTrait
     }
 
     /**
-     * @param string $url
-     * @param string $name
-     *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function regenerateUsersOrders(): void
     {
@@ -51,8 +48,7 @@ trait SystemTestTrait
 
         try {
             $schemaManager->dropDatabase($GLOBALS['db_name']);
-        } catch (\Exception $e) {
-            // If tardet database doesn't exist.
+        } catch (\Exception) {
         }
 
         $schemaManager->createDatabase($GLOBALS['db_name']);
@@ -63,7 +59,7 @@ trait SystemTestTrait
         $schema = $schemaManager->createSchema();
 
         $user = $schema->createTable('users');
-        $user->addColumn('id', 'integer', ['id' => true, 'unsigned' => true, 'unique']);
+        $user->addColumn('id', 'integer', ['unsigned' => true]);
         $user->addColumn('email', 'string', ['length' => 256, 'notnull' => false]);
         $user->addColumn('firstname', 'string', ['length' => 256, 'notnull' => false]);
         $user->addColumn('lastname', 'string', ['length' => 256, 'notnull' => false]);
@@ -71,6 +67,7 @@ trait SystemTestTrait
         $user->addColumn('phone', 'string', ['length' => 20, 'notnull' => false]);
         $user->addColumn('password', 'string', ['length' => 64, 'notnull' => false]);
         $user->setPrimaryKey(['id']);
+        $user->addUniqueIndex(['id']);
         $schemaManager->createTable($user);
 
         $order = $schema->createTable('orders');
@@ -105,7 +102,7 @@ trait SystemTestTrait
         foreach (range(1, 20) as $i) {
             $connection->createQueryBuilder()
                 ->insert('orders')
-                ->values(['id' => $i, 'user_id' => mt_rand(1, 10)])
+                ->values(['id' => $i, 'user_id' => random_int(1, 10)])
                 ->execute();
         }
 
@@ -114,7 +111,7 @@ trait SystemTestTrait
                 ->insert('productivity')
                 ->values([
                     'day' => $connection->quote(new \DateTime("+$i days"), 'date'),
-                    'user_id' => mt_rand(1, 10)
+                    'user_id' => random_int(1, 10)
                 ])
                 ->execute();
         }

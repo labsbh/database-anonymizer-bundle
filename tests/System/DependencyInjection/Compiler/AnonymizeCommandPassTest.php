@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WebnetFr\DatabaseAnonymizerBundle\Tests\System\DependencyInjection\Compiler;
 
 use Matthias\SymfonyDependencyInjectionTest\PhpUnit\AbstractCompilerPassTestCase;
@@ -11,7 +13,7 @@ use WebnetFr\DatabaseAnonymizerBundle\Config\AnnotationConfigFactory;
 use WebnetFr\DatabaseAnonymizerBundle\DependencyInjection\Compiler\AnonymizeCommandPass;
 
 /**
- * @see AnonymizeCommandPass
+ * @see    AnonymizeCommandPass
  *
  * @author Vlad Riabchenko <vriabchenko@webnet.fr>
  */
@@ -20,13 +22,13 @@ class AnonymizeCommandPassTest extends AbstractCompilerPassTestCase
     /**
      * {@inheritdoc}
      */
-    protected function registerCompilerPass(ContainerBuilder $container)
+    protected function registerCompilerPass(ContainerBuilder $container): void
     {
         $container->addCompilerPass(new AnonymizeCommandPass());
         $container->prependExtensionConfig('webnet_fr_database_anonymizer', $this->getConfig());
     }
 
-    public function testConfigPassed()
+    public function testConfigPassed(): void
     {
         $this->setDefinition(AnonymizeCommand::class, new Definition());
         $this->compile();
@@ -34,7 +36,7 @@ class AnonymizeCommandPassTest extends AbstractCompilerPassTestCase
         $expectedConfig = [
             'connections' => [
                 'default' => $this->getConfig(),
-            ]
+            ],
         ];
 
         $this->assertContainerBuilderHasServiceDefinitionWithMethodCall(
@@ -44,7 +46,7 @@ class AnonymizeCommandPassTest extends AbstractCompilerPassTestCase
         );
     }
 
-    public function testDoctrinePassed()
+    public function testDoctrinePassed(): void
     {
         $this->setDefinition(AnonymizeCommand::class, new Definition());
         $this->setDefinition('doctrine', new Definition());
@@ -57,7 +59,7 @@ class AnonymizeCommandPassTest extends AbstractCompilerPassTestCase
         );
     }
 
-    public function testAnnotationReaderPassed()
+    public function testAnnotationReaderPassed(): void
     {
         $this->setDefinition(AnonymizeCommand::class, new Definition());
         $this->setDefinition('annotations.reader', new Definition());
@@ -75,16 +77,17 @@ class AnonymizeCommandPassTest extends AbstractCompilerPassTestCase
     /**
      * @return array
      */
-    private function getConfig()
+    private function getConfig(): array
     {
         return [
             'defaults' => [
                 'locale' => 'fr_FR',
             ],
-            'tables' => [
+            'tables'   => [
                 'users' => [
-                    'fields' => [],
+                    'fields'      => [],
                     'primary_key' => [],
+                    'truncate'    => false,
                 ],
             ],
         ];
